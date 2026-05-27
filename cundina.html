@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cundina - Múltiples turnos por ahorrador</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', 'Roboto', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 1400px;
+            width: 100%;
+            background: white;
+            border-radius: 32px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            padding: 30px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #1e3c72;
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 2.2rem;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #555;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 15px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 24px;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .input-group label {
+            font-weight: 600;
+            color: #0f172a;
+            font-size: 0.9rem;
+        }
+
+        .input-group input {
+            padding: 12px 15px;
+            border: 2px solid #cbd5e1;
+            border-radius: 16px;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #2a5298;
+            box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.2);
+        }
+
+        button {
+            background: #1e3c72;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #2a5298;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .users-section {
+            margin-top: 30px;
+            background: #f1f5f9;
+            border-radius: 24px;
+            padding: 20px;
+            display: none;
+        }
+
+        .users-section.active {
+            display: block;
+        }
+
+        .users-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #0f172a;
+            margin-bottom: 15px;
+        }
+
+        .users-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .user-card {
+            background: white;
+            border-radius: 16px;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            transition: all 0.2s;
+        }
+
+        .user-card:hover {
+            border-color: #2a5298;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .user-name-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            font-size: 1rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .turns-input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .turns-input-group label {
+            font-size: 0.85rem;
+            color: #475569;
+            font-weight: 600;
+        }
+
+        .turns-input-group input {
+            width: 80px;
+            padding: 8px;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 1rem;
+        }
+
+        .turns-info {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 8px;
+            text-align: center;
+        }
+
+        .total-turns-display {
+            background: #e2e8f0;
+            padding: 12px;
+            border-radius: 16px;
+            margin: 15px 0;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .total-turns-display span {
+            color: #1e3c72;
+            font-size: 1.2rem;
+        }
+
+        .error-badge {
+            color: #dc2626;
+            font-size: 0.8rem;
+            margin-top: 5px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .results {
+            margin-top: 30px;
+            background: #eef2ff;
+            border-radius: 24px;
+            padding: 20px;
+            display: none;
+        }
+
+        .results.active {
+            display: block;
+        }
+
+        .results h3 {
+            color: #1e3c72;
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            text-align: center;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background: #1e3c72;
+            color: white;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:hover {
+            background: #f8fafc;
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 12px;
+            border-radius: 16px;
+            margin-top: 15px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .success {
+            background: #dcfce7;
+            color: #166534;
+            padding: 12px;
+            border-radius: 16px;
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .warning {
+            background: #fef3c7;
+            color: #92400e;
+            padding: 12px;
+            border-radius: 16px;
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .reset-btn {
+            background: #64748b;
+        }
+
+        .reset-btn:hover {
+            background: #475569;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🎲 Cundina con Múltiples Turnos</h1>
+    <div class="subtitle">Cada ahorrador puede tener 1 o más turnos (quincenas)</div>
+
+    <div class="form-grid">
+        <div class="input-group">
+            <label>👥 Número de usuarios / ahorradores</label>
+            <input type="number" id="numUsers" min="1" max="50" value="3">
+        </div>
+        <div class="input-group">
+            <label>📅 Número total de quincenas (turnos)</label>
+            <input type="number" id="numTurns" min="1" max="48" value="6">
+        </div>
+        <div class="input-group">
+            <label>🗓️ Fecha de inicio de la cundina</label>
+            <input type="date" id="startDate" value="2025-01-01">
+        </div>
+    </div>
+
+    <button id="setupUsersBtn">✏️ Configurar ahorradores y sus turnos</button>
+
+    <!-- Sección para ingresar nombres y turnos por persona -->
+    <div id="usersSection" class="users-section">
+        <div class="users-title">📝 Asignar turnos por ahorrador</div>
+        <div id="usersInputs" class="users-grid"></div>
+        <div id="totalTurnsDisplay" class="total-turns-display"></div>
+        <div class="button-group">
+            <button id="generateSorteoBtn">🎲 Realizar sorteo aleatorio</button>
+            <button id="resetBtn" class="reset-btn">🔄 Reiniciar todo</button>
+        </div>
+    </div>
+
+    <!-- Resultados -->
+    <div id="resultsSection" class="results">
+        <h3>📋 Resultado del Sorteo</h3>
+        <div class="table-wrapper">
+            <table id="resultsTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Ahorrador</th>
+                        <th>Quincena asignada</th>
+                        <th>Fecha</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsBody"></tbody>
+            </table>
+        </div>
+        <div id="message"></div>
+    </div>
+    <footer>⚡ Cada quincena corresponde al día 1 o 15 del mes | Los turnos se asignan respetando la cantidad elegida por cada ahorrador</footer>
+</div>
+
+<script>
+    // Variables globales
+    let currentUsersData = [];    // { nombre, turnosDeseados }
+    let quincenasList = [];
+    let sorteoRealizado = false;
+
+    // Elementos DOM
+    const numUsersInput = document.getElementById('numUsers');
+    const numTurnsInput = document.getElementById('numTurns');
+    const startDateInput = document.getElementById('startDate');
+    const setupBtn = document.getElementById('setupUsersBtn');
+    const usersSection = document.getElementById('usersSection');
+    const usersInputsDiv = document.getElementById('usersInputs');
+    const generateBtn = document.getElementById('generateSorteoBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const resultsSection = document.getElementById('resultsSection');
+    const resultsBody = document.getElementById('resultsBody');
+    const messageDiv = document.getElementById('message');
+    const totalTurnsDisplay = document.getElementById('totalTurnsDisplay');
+
+    // ========== FUNCIONES AUXILIARES ==========
+    function limpiarMensajes() {
+        messageDiv.innerHTML = '';
+        messageDiv.className = '';
+    }
+
+    function mostrarMensaje(texto, tipo = 'error') {
+        messageDiv.innerHTML = texto;
+        messageDiv.className = tipo;
+        if (tipo === 'success') {
+            setTimeout(() => {
+                if (messageDiv.className === 'success') limpiarMensajes();
+            }, 3000);
+        }
+    }
+
+    // Genera la lista de quincenas a partir de fecha de inicio y número de turnos
+    function generarQuincenas(fechaInicio, numTurnos) {
+        const quincenas = [];
+        let currentDate = new Date(fechaInicio);
+        
+        let dia = currentDate.getDate();
+        let mes = currentDate.getMonth();
+        let anio = currentDate.getFullYear();
+        
+        let esPrimeraQuincena = (dia <= 14);
+        let diaBase = esPrimeraQuincena ? 1 : 15;
+        let fechaBase = new Date(anio, mes, diaBase);
+        
+        for (let i = 0; i < numTurnos; i++) {
+            let fechaQuincena = new Date(fechaBase);
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            let descripcion = fechaQuincena.toLocaleDateString('es-ES', options);
+            let mesNum = fechaQuincena.getMonth() + 1;
+            let diaNum = fechaQuincena.getDate();
+            let quincenaLabel = `${diaNum.toString().padStart(2,'0')}/${mesNum.toString().padStart(2,'0')}`;
+            
+            quincenas.push({
+                id: i + 1,
+                descripcion: `${quincenaLabel} - ${descripcion}`,
+                fechaObj: new Date(fechaQuincena),
+                fechaLabel: descripcion
+            });
+            
+            if (diaNum === 1) {
+                fechaBase.setDate(15);
+            } else if (diaNum === 15) {
+                fechaBase.setMonth(fechaBase.getMonth() + 1);
+                fechaBase.setDate(1);
+            }
+        }
+        return quincenas;
+    }
+
+    // Renderizar inputs para nombres y turnos
+    function renderizarConfiguracionUsuarios(cantidad) {
+        usersInputsDiv.innerHTML = '';
+        for (let i = 0; i < cantidad; i++) {
+            const card = document.createElement('div');
+            card.className = 'user-card';
+            
+            // Nombre
+            const nameInput = document.createElement('input');
+            nameInput.type = 'text';
+            nameInput.placeholder = `Nombre del ahorrador ${i + 1}`;
+            nameInput.value = currentUsersData[i]?.nombre || `Ahorrador ${i + 1}`;
+            nameInput.className = 'user-name-input';
+            nameInput.id = `userName_${i}`;
+            
+            // Turnos
+            const turnsDiv = document.createElement('div');
+            turnsDiv.className = 'turns-input-group';
+            turnsDiv.innerHTML = `
+                <label>🎯 Turnos a recibir:</label>
+                <input type="number" id="userTurns_${i}" min="0" max="${parseInt(numTurnsInput.value)}" value="${currentUsersData[i]?.turnosDeseados || 1}" step="1">
+            `;
+            
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'turns-info';
+            infoDiv.textContent = 'Máximo ' + numTurnsInput.value + ' turnos';
+            
+            card.appendChild(nameInput);
+            card.appendChild(turnsDiv);
+            card.appendChild(infoDiv);
+            usersInputsDiv.appendChild(card);
+            
+            // Agregar event listener para actualizar el total
+            const turnsInput = document.getElementById(`userTurns_${i}`);
+            turnsInput.addEventListener('change', () => actualizarTotalTurnos());
+            turnsInput.addEventListener('input', () => actualizarTotalTurnos());
+            nameInput.addEventListener('change', () => actualizarTotalTurnos());
+        }
+        actualizarTotalTurnos();
+    }
+    
+    // Calcular y mostrar total de turnos asignados
+    function actualizarTotalTurnos() {
+        const numUsers = parseInt(numUsersInput.value);
+        let totalAsignado = 0;
+        for (let i = 0; i < numUsers; i++) {
+            const turnsInput = document.getElementById(`userTurns_${i}`);
+            if (turnsInput) {
+                totalAsignado += parseInt(turnsInput.value) || 0;
+            }
+        }
+        
+        const totalRequerido = parseInt(numTurnsInput.value);
+        
+        if (totalAsignado === totalRequerido) {
+            totalTurnsDisplay.innerHTML = `✅ Total de turnos asignados: <span>${totalAsignado}</span> / ${totalRequerido} - ¡Correcto!`;
+            totalTurnsDisplay.style.background = "#dcfce7";
+            totalTurnsDisplay.style.color = "#166534";
+        } else if (totalAsignado < totalRequerido) {
+            totalTurnsDisplay.innerHTML = `⚠️ Faltan <span>${totalRequerido - totalAsignado}</span> turnos por asignar. Total: ${totalAsignado} / ${totalRequerido}`;
+            totalTurnsDisplay.style.background = "#fef3c7";
+            totalTurnsDisplay.style.color = "#92400e";
+        } else {
+            totalTurnsDisplay.innerHTML = `❌ Sobran <span>${totalAsignado - totalRequerido}</span> turnos. Total: ${totalAsignado} / ${totalRequerido}`;
+            totalTurnsDisplay.style.background = "#fee2e2";
+            totalTurnsDisplay.style.color = "#991b1b";
+        }
+        
+        return totalAsignado === totalRequerido;
+    }
+    
+    // Obtener datos de usuarios desde inputs
+    function obtenerDatosUsuarios() {
+        const numUsers = parseInt(numUsersInput.value);
+        const usuarios = [];
+        for (let i = 0; i < numUsers; i++) {
+            const nameInput = document.getElementById(`userName_${i}`);
+            const turnsInput = document.getElementById(`userTurns_${i}`);
+            const nombre = nameInput ? nameInput.value.trim() : `Ahorrador ${i + 1}`;
+            const turnos = turnsInput ? parseInt(turnsInput.value) : 0;
+            if (nombre && turnos > 0) {
+                usuarios.push({
+                    nombre: nombre,
+                    turnosDeseados: turnos
+                });
+            }
+        }
+        return usuarios;
+    }
+    
+    // Validar configuración antes del sorteo
+    function validarConfiguracionSorteo(usuarios, totalQuincenas) {
+        if (usuarios.length === 0) {
+            return { valido: false, mensaje: "Debe haber al menos un ahorrador con turnos asignados" };
+        }
+        
+        const totalTurnosAsignados = usuarios.reduce((sum, u) => sum + u.turnosDeseados, 0);
+        
+        if (totalTurnosAsignados !== totalQuincenas) {
+            return { 
+                valido: false, 
+                mensaje: `La suma de turnos (${totalTurnosAsignados}) no coincide con el total de quincenas (${totalQuincenas}). Ajusta los turnos de cada persona.` 
+            };
+        }
+        
+        // Verificar que ningún turno sea 0
+        const algunCero = usuarios.some(u => u.turnosDeseados <= 0);
+        if (algunCero) {
+            return { valido: false, mensaje: "Todos los ahorradores deben tener al menos 1 turno" };
+        }
+        
+        return { valido: true };
+    }
+    
+    // Algoritmo de sorteo respetando turnos por persona
+    function realizarSorteoRespetandoTurnos(usuarios, quincenas) {
+        // Crear un array con los nombres repetidos según la cantidad de turnos que tiene cada uno
+        let poolAsignaciones = [];
+        usuarios.forEach(usuario => {
+            for (let i = 0; i < usuario.turnosDeseados; i++) {
+                poolAsignaciones.push(usuario.nombre);
+            }
+        });
+        
+        // Mezclar el pool de nombres (Fisher-Yates)
+        for (let i = poolAsignaciones.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [poolAsignaciones[i], poolAsignaciones[j]] = [poolAsignaciones[j], poolAsignaciones[i]];
+        }
+        
+        // Mezclar las quincenas
+        let quincenasMezcladas = [...quincenas];
+        for (let i = quincenasMezcladas.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [quincenasMezcladas[i], quincenasMezcladas[j]] = [quincenasMezcladas[j], quincenasMezcladas[i]];
+        }
+        
+        // Asignar cada nombre del pool a una quincena
+        const asignaciones = [];
+        for (let i = 0; i < poolAsignaciones.length; i++) {
+            asignaciones.push({
+                usuario: poolAsignaciones[i],
+                quincenaDesc: quincenasMezcladas[i].descripcion,
+                fecha: quincenasMezcladas[i].fechaObj,
+                turnoNum: quincenasMezcladas[i].id,
+                fechaLabel: quincenasMezcladas[i].fechaLabel
+            });
+        }
+        
+        // Ordenar por fecha de quincena (cronológico)
+        asignaciones.sort((a, b) => a.fecha - b.fecha);
+        
+        return asignaciones;
+    }
+    
+    // Mostrar resultados en tabla
+    function mostrarResultados(asignaciones) {
+        resultsBody.innerHTML = '';
+        asignaciones.forEach((asign, index) => {
+            const row = resultsBody.insertRow();
+            const cellNum = row.insertCell(0);
+            const cellUser = row.insertCell(1);
+            const cellQuincena = row.insertCell(2);
+            const cellFecha = row.insertCell(3);
+            
+            cellNum.textContent = index + 1;
+            cellUser.textContent = asign.usuario;
+            cellQuincena.textContent = asign.quincenaDesc;
+            cellFecha.textContent = asign.fecha.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+        });
+        resultsSection.classList.add('active');
+    }
+    
+    // Mostrar resumen de turnos por persona
+    function mostrarResumenTurnos(usuarios) {
+        console.log("Resumen de turnos solicitados:", usuarios);
+        let resumen = "📊 Resumen de turnos: ";
+        usuarios.forEach(u => {
+            resumen += `${u.nombre}: ${u.turnosDeseados} turno(s), `;
+        });
+        mostrarMensaje(resumen.slice(0, -2), 'success');
+    }
+    
+    // Acción principal: configurar usuarios
+    function configurarUsuarios() {
+        limpiarMensajes();
+        const numUsers = parseInt(numUsersInput.value);
+        const numTurns = parseInt(numTurnsInput.value);
+        const startDate = startDateInput.value;
+        
+        if (!startDate) {
+            mostrarMensaje("Por favor selecciona una fecha de inicio", 'error');
+            return;
+        }
+        
+        if (numUsers <= 0 || numTurns <= 0) {
+            mostrarMensaje("Número de usuarios y quincenas debe ser mayor a 0", 'error');
+            return;
+        }
+        
+        // Inicializar datos de usuarios si no existen
+        if (currentUsersData.length !== numUsers) {
+            currentUsersData = [];
+            for (let i = 0; i < numUsers; i++) {
+                currentUsersData.push({
+                    nombre: `Ahorrador ${i+1}`,
+                    turnosDeseados: 1
+                });
+            }
+        }
+        
+        renderizarConfiguracionUsuarios(numUsers);
+        usersSection.classList.add('active');
+        resultsSection.classList.remove('active');
+        sorteoRealizado = false;
+    }
+    
+    // Generar sorteo final
+    function generarSorteoFinal() {
+        limpiarMensajes();
+        
+        const numTurns = parseInt(numTurnsInput.value);
+        const startDate = startDateInput.value;
+        
+        if (!startDate) {
+            mostrarMensaje("Fecha de inicio no válida", 'error');
+            return;
+        }
+        
+        // Obtener datos actualizados
+        const usuarios = obtenerDatosUsuarios();
+        
+        // Validar
+        const validacion = validarConfiguracionSorteo(usuarios, numTurns);
+        if (!validacion.valido) {
+            mostrarMensaje(validacion.mensaje, 'error');
+            return;
+        }
+        
+        // Generar quincenas
+        quincenasList = generarQuincenas(startDate, numTurns);
+        
+        if (quincenasList.length !== numTurns) {
+            mostrarMensaje("Error generando quincenas", 'error');
+            return;
+        }
+        
+        // Realizar sorteo
+        const asignaciones = realizarSorteoRespetandoTurnos(usuarios, quincenasList);
+        
+        // Mostrar resultados
+        mostrarResultados(asignaciones);
+        mostrarResumenTurnos(usuarios);
+        mostrarMensaje(`✨ Sorteo completado exitosamente! Se asignaron ${asignaciones.length} turnos a ${usuarios.length} ahorradores.`, 'success');
+        sorteoRealizado = true;
+    }
+    
+    // Reiniciar todo
+    function reiniciarTodo() {
+        currentUsersData = [];
+        quincenasList = [];
+        sorteoRealizado = false;
+        usersSection.classList.remove('active');
+        resultsSection.classList.remove('active');
+        limpiarMensajes();
+        numUsersInput.value = "3";
+        numTurnsInput.value = "6";
+        startDateInput.value = "2025-01-01";
+        mostrarMensaje("Todo ha sido reiniciado. Puedes comenzar de nuevo.", 'success');
+    }
+    
+    // Eventos
+    setupBtn.addEventListener('click', configurarUsuarios);
+    generateBtn.addEventListener('click', generarSorteoFinal);
+    resetBtn.addEventListener('click', reiniciarTodo);
+    
+    // Validar cambios en números
+    numUsersInput.addEventListener('change', () => {
+        if (sorteoRealizado) reiniciarTodo();
+    });
+    numTurnsInput.addEventListener('change', () => {
+        if (sorteoRealizado) reiniciarTodo();
+        if (usersSection.classList.contains('active')) {
+            // Actualizar máximos de turnos
+            const maxTurns = parseInt(numTurnsInput.value);
+            for (let i = 0; i < parseInt(numUsersInput.value); i++) {
+                const turnsInput = document.getElementById(`userTurns_${i}`);
+                if (turnsInput) {
+                    turnsInput.max = maxTurns;
+                    const siblingDiv = turnsInput.closest('.user-card')?.querySelector('.turns-info');
+                    if (siblingDiv) siblingDiv.textContent = `Máximo ${maxTurns} turnos`;
+                }
+            }
+            actualizarTotalTurnos();
+        }
+    });
+    startDateInput.addEventListener('change', () => {
+        if (sorteoRealizado) reiniciarTodo();
+    });
+</script>
+</body>
+</html>

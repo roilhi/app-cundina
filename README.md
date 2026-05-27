@@ -66,4 +66,4 @@ Genera un archivo Excel profesional con 3 hojas:
 
 📊 Resultados del Sorteo: Tabla completa con número, ahorrador, quincena y fecha
 
-📈 **Resumen por Person
+📈 **Resumen por Persona

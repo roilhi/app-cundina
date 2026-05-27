@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cundina - Múltiples turnos por ahorrador</title>
+    <title>Cundina - Múltiples turnos por ahorrador + Exportar a Excel</title>
+    <!-- Librería para exportar a Excel -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -208,6 +210,7 @@
             gap: 15px;
             justify-content: center;
             margin-top: 20px;
+            flex-wrap: wrap;
         }
 
         .results {
@@ -222,12 +225,43 @@
             display: block;
         }
 
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
         .results h3 {
             color: #1e3c72;
-            margin-top: 0;
-            margin-bottom: 20px;
+            margin: 0;
             font-size: 1.5rem;
-            text-align: center;
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .export-btn {
+            background: #10b981;
+            padding: 10px 20px;
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        .export-btn:hover {
+            background: #059669;
+        }
+
+        .export-excel-btn {
+            background: #0f9d58;
+        }
+
+        .export-csv-btn {
+            background: #f59e0b;
         }
 
         .table-wrapper {
@@ -313,13 +347,20 @@
             .button-group {
                 flex-direction: column;
             }
+            .results-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .export-buttons {
+                justify-content: center;
+            }
         }
     </style>
 </head>
 <body>
 <div class="container">
     <h1>🎲 Cundina con Múltiples Turnos</h1>
-    <div class="subtitle">Cada ahorrador puede tener 1 o más turnos (quincenas)</div>
+    <div class="subtitle">Cada ahorrador puede tener 1 o más turnos (quincenas) | Exporta a Excel/CSV</div>
 
     <div class="form-grid">
         <div class="input-group">
@@ -351,7 +392,13 @@
 
     <!-- Resultados -->
     <div id="resultsSection" class="results">
-        <h3>📋 Resultado del Sorteo</h3>
+        <div class="results-header">
+            <h3>📋 Resultado del Sorteo</h3>
+            <div class="export-buttons">
+                <button id="exportExcelBtn" class="export-btn export-excel-btn">📊 Exportar a Excel</button>
+                <button id="exportCSVBtn" class="export-btn export-csv-btn">📄 Exportar a CSV</button>
+            </div>
+        </div>
         <div class="table-wrapper">
             <table id="resultsTable">
                 <thead>
@@ -374,6 +421,7 @@
     // Variables globales
     let currentUsersData = [];    // { nombre, turnosDeseados }
     let quincenasList = [];
+    let ultimoSorteo = [];        // Guardar último sorteo para exportar
     let sorteoRealizado = false;
 
     // Elementos DOM
@@ -389,6 +437,8 @@
     const resultsBody = document.getElementById('resultsBody');
     const messageDiv = document.getElementById('message');
     const totalTurnsDisplay = document.getElementById('totalTurnsDisplay');
+    const exportExcelBtn = document.getElementById('exportExcelBtn');
+    const exportCSVBtn = document.getElementById('exportCSVBtn');
 
     // ========== FUNCIONES AUXILIARES ==========
     function limpiarMensajes() {
@@ -431,7 +481,10 @@
                 id: i + 1,
                 descripcion: `${quincenaLabel} - ${descripcion}`,
                 fechaObj: new Date(fechaQuincena),
-                fechaLabel: descripcion
+                fechaLabel: descripcion,
+                dia: diaNum,
+                mes: mesNum,
+                anio: fechaQuincena.getFullYear()
             });
             
             if (diaNum === 1) {
@@ -585,16 +638,25 @@
         const asignaciones = [];
         for (let i = 0; i < poolAsignaciones.length; i++) {
             asignaciones.push({
+                numero: i + 1,
                 usuario: poolAsignaciones[i],
                 quincenaDesc: quincenasMezcladas[i].descripcion,
                 fecha: quincenasMezcladas[i].fechaObj,
                 turnoNum: quincenasMezcladas[i].id,
-                fechaLabel: quincenasMezcladas[i].fechaLabel
+                fechaLabel: quincenasMezcladas[i].fechaLabel,
+                dia: quincenasMezcladas[i].dia,
+                mes: quincenasMezcladas[i].mes,
+                anio: quincenasMezcladas[i].anio
             });
         }
         
         // Ordenar por fecha de quincena (cronológico)
         asignaciones.sort((a, b) => a.fecha - b.fecha);
+        
+        // Re-numerar después de ordenar
+        asignaciones.forEach((asig, idx) => {
+            asig.numero = idx + 1;
+        });
         
         return asignaciones;
     }
@@ -602,14 +664,14 @@
     // Mostrar resultados en tabla
     function mostrarResultados(asignaciones) {
         resultsBody.innerHTML = '';
-        asignaciones.forEach((asign, index) => {
+        asignaciones.forEach((asign) => {
             const row = resultsBody.insertRow();
             const cellNum = row.insertCell(0);
             const cellUser = row.insertCell(1);
             const cellQuincena = row.insertCell(2);
             const cellFecha = row.insertCell(3);
             
-            cellNum.textContent = index + 1;
+            cellNum.textContent = asign.numero;
             cellUser.textContent = asign.usuario;
             cellQuincena.textContent = asign.quincenaDesc;
             cellFecha.textContent = asign.fecha.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -619,12 +681,131 @@
     
     // Mostrar resumen de turnos por persona
     function mostrarResumenTurnos(usuarios) {
-        console.log("Resumen de turnos solicitados:", usuarios);
         let resumen = "📊 Resumen de turnos: ";
         usuarios.forEach(u => {
             resumen += `${u.nombre}: ${u.turnosDeseados} turno(s), `;
         });
         mostrarMensaje(resumen.slice(0, -2), 'success');
+    }
+    
+    // ========== FUNCIONES DE EXPORTACIÓN ==========
+    
+    // Preparar datos para exportar
+    function prepararDatosExportacion() {
+        if (!ultimoSorteo || ultimoSorteo.length === 0) {
+            mostrarMensaje("No hay datos para exportar. Realiza un sorteo primero.", 'error');
+            return null;
+        }
+        
+        // Obtener información adicional
+        const fechaInicio = startDateInput.value;
+        const fechaFormateada = new Date(fechaInicio).toLocaleDateString('es-ES');
+        const totalQuincenas = numTurnsInput.value;
+        const totalUsuarios = numUsersInput.value;
+        
+        // Datos principales del sorteo
+        const datosSorteo = ultimoSorteo.map(asign => ({
+            '#': asign.numero,
+            'Ahorrador': asign.usuario,
+            'Quincena': asign.quincenaDesc,
+            'Fecha': asign.fecha.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' }),
+            'Día': asign.dia,
+            'Mes': asign.mes,
+            'Año': asign.anio
+        }));
+        
+        // Datos de resumen
+        // Obtener turnos por persona para el resumen
+        const usuariosActuales = obtenerDatosUsuarios();
+        const resumenPersonas = usuariosActuales.map(u => ({
+            'Ahorrador': u.nombre,
+            'Turnos asignados': u.turnosDeseados,
+            'Porcentaje': ((u.turnosDeseados / totalQuincenas) * 100).toFixed(1) + '%'
+        }));
+        
+        return {
+            metadata: {
+                'Fecha del sorteo': new Date().toLocaleString('es-ES'),
+                'Fecha inicio cundina': fechaFormateada,
+                'Total quincenas': totalQuincenas,
+                'Total ahorradores': totalUsuarios,
+                'Total turnos asignados': ultimoSorteo.length
+            },
+            sorteo: datosSorteo,
+            resumen: resumenPersonas
+        };
+    }
+    
+    // Exportar a Excel (múltiples hojas)
+    function exportarAExcel() {
+        const datos = prepararDatosExportacion();
+        if (!datos) return;
+        
+        try {
+            // Crear libro de trabajo
+            const wb = XLSX.utils.book_new();
+            
+            // Hoja 1: Sorteo
+            const wsSorteo = XLSX.utils.json_to_sheet(datos.sorteo);
+            XLSX.utils.book_append_sheet(wb, wsSorteo, "Resultados Sorteo");
+            
+            // Hoja 2: Resumen por persona
+            const wsResumen = XLSX.utils.json_to_sheet(datos.resumen);
+            XLSX.utils.book_append_sheet(wb, wsResumen, "Resumen por Persona");
+            
+            // Hoja 3: Metadatos
+            const wsMetadata = XLSX.utils.json_to_sheet([datos.metadata]);
+            XLSX.utils.book_append_sheet(wb, wsMetadata, "Información General");
+            
+            // Ajustar anchos de columna (opcional)
+            wsSorteo['!cols'] = [{wch:8}, {wch:25}, {wch:35}, {wch:25}, {wch:8}, {wch:8}, {wch:8}];
+            wsResumen['!cols'] = [{wch:25}, {wch:15}, {wch:12}];
+            
+            // Generar nombre del archivo con fecha
+            const fechaArchivo = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+            const nombreArchivo = `Cundina_Sorteo_${fechaArchivo}.xlsx`;
+            
+            // Exportar
+            XLSX.writeFile(wb, nombreArchivo);
+            mostrarMensaje(`✅ Excel exportado exitosamente como "${nombreArchivo}"`, 'success');
+        } catch (error) {
+            console.error('Error al exportar a Excel:', error);
+            mostrarMensaje('Error al exportar a Excel. Revisa la consola.', 'error');
+        }
+    }
+    
+    // Exportar a CSV
+    function exportarACSV() {
+        const datos = prepararDatosExportacion();
+        if (!datos) return;
+        
+        try {
+            // Crear hoja de trabajo con los datos del sorteo
+            const ws = XLSX.utils.json_to_sheet(datos.sorteo);
+            
+            // Generar CSV
+            const csv = XLSX.utils.sheet_to_csv(ws);
+            
+            // Crear blob y descargar
+            const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            const fechaArchivo = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+            const nombreArchivo = `Cundina_Sorteo_${fechaArchivo}.csv`;
+            
+            link.href = url;
+            link.setAttribute('download', nombreArchivo);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            mostrarMensaje(`✅ CSV exportado exitosamente como "${nombreArchivo}"`, 'success');
+        } catch (error) {
+            console.error('Error al exportar a CSV:', error);
+            mostrarMensaje('Error al exportar a CSV.', 'error');
+        }
     }
     
     // Acción principal: configurar usuarios
@@ -659,6 +840,7 @@
         usersSection.classList.add('active');
         resultsSection.classList.remove('active');
         sorteoRealizado = false;
+        ultimoSorteo = [];
     }
     
     // Generar sorteo final
@@ -694,6 +876,9 @@
         // Realizar sorteo
         const asignaciones = realizarSorteoRespetandoTurnos(usuarios, quincenasList);
         
+        // Guardar para exportación
+        ultimoSorteo = asignaciones;
+        
         // Mostrar resultados
         mostrarResultados(asignaciones);
         mostrarResumenTurnos(usuarios);
@@ -705,6 +890,7 @@
     function reiniciarTodo() {
         currentUsersData = [];
         quincenasList = [];
+        ultimoSorteo = [];
         sorteoRealizado = false;
         usersSection.classList.remove('active');
         resultsSection.classList.remove('active');
@@ -719,6 +905,8 @@
     setupBtn.addEventListener('click', configurarUsuarios);
     generateBtn.addEventListener('click', generarSorteoFinal);
     resetBtn.addEventListener('click', reiniciarTodo);
+    exportExcelBtn.addEventListener('click', exportarAExcel);
+    exportCSVBtn.addEventListener('click', exportarACSV);
     
     // Validar cambios en números
     numUsersInput.addEventListener('change', () => {

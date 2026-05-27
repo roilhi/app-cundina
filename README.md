@@ -59,3 +59,11 @@ Todas las 6 quincenas se asignan sin repetir
 ✅ Persistencia mientras configuras
 
 ✅ Fácil de reiniciar
+
+🎉 Nuevas funcionalidades de exportación
+1. Exportar a Excel (formato .xlsx)
+Genera un archivo Excel profesional con 3 hojas:
+
+📊 Resultados del Sorteo: Tabla completa con número, ahorrador, quincena y fecha
+
+📈 **Resumen por Person
